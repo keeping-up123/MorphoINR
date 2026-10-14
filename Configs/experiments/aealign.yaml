@@ -1,0 +1,37 @@
+case: data
+
+dataset:
+  type: ST2D
+  data_file: data/raw/${case}/${case}_with_phikon.h5ad
+  val_proportion: 0.2
+  keep_ratio: True
+  require_coordnorm: False
+  image_key: phikon_cls
+
+pipeline:
+  embedder:
+    model: AE
+    dim_hidden: [2048, 512, 128]
+    dim_latent: 64
+    in_logarithm: False
+    dice_lambda: 0.05
+
+  alignment:
+    enable: True
+    image_dim: 1024
+    hidden_dim: 512
+    alpha: 0.001
+    temperature: 0.1
+    detach_gene_for_align: False
+
+  optimization:
+    seed: 8848
+    epochs: 200
+    lr: 1e-5
+    val_freq: 50
+    logs: logs_final/random/${case}/aealign
+    batch_size: 512
+
+  predict_mode: all
+  embedded_data: embedded-all.h5ad
+  embedded_output: data_final/${case}/${case}_aealign_with_embeddings_phikon_zlocal.h5ad

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.pytest_cache/
+
+# Environments and local configuration
+.venv/
+venv/
+env/
+.env
+
+# Large research data and generated artifacts
+data/raw/
+data/processed/
+data/**/*.h5ad
+data/**/*.h5
+data/**/*.bam
+data/**/*.bai
+data/**/*.mtx
+data/**/*.gz
+checkpoints/*
+!checkpoints/README.md
+logs/
+logs_*/
+logs_final/*
+!logs_final/README.md
+data_final/*
+!data_final/README.md
+!data_final/.gitkeep
+tensorboard/
+results/generated/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

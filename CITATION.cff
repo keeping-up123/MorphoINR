@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "MorphoINR: Histology-Guided Continuous Spatial Transcriptomics Imputation via Cross-Modal Aligned Latent Implicit Neural Representations"
+type: software
+abstract: "Code and configuration for histology-guided continuous spatial transcriptomics imputation with aligned latent implicit neural representations."
+license: MIT
+repository-code: https://github.com/<organization-or-user>/MorphoINR
+date-released: 2026-09-27
+authors:
+  - family-names: "TODO"
+    given-names: "TODO"
+    affiliation: "TODO"
+

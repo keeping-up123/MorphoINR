@@ -1,0 +1,2 @@
+from systems.embedder_fitting_system import train_embedder
+from systems.inr_fitting_system_film import train_inr as train_inr_film

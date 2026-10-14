@@ -1,0 +1,36 @@
+name: morphoinr
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  # The public experiments were run with Python 3.9.25.
+  - python=3.9.25
+  - pip
+  - setuptools
+  - wheel
+  - pip:
+      # Core numerical and spatial-transcriptomics stack.
+      - numpy==1.26.4
+      - scipy==1.13.1
+      - pandas==2.3.3
+      - scikit-learn==1.6.1
+      - scanpy==1.10.3
+      - anndata==0.10.9
+      # Model and training stack.
+      - torch==2.8.0
+      - lightning==2.6.0
+      - einops==0.8.2
+      - omegaconf==2.3.0
+      - rich==15.0.0
+      - tensorboard==2.20.0
+      - transformers==4.57.6
+      # Utilities used by preprocessing and analysis scripts.
+      - matplotlib==3.9.4
+      - Pillow==11.3.0
+      - tqdm==4.67.3
+
+# The pinned torch wheel above includes CUDA 12.x runtime libraries on Linux.
+# For a different CUDA/OS combination, install the matching PyTorch wheel from
+# https://pytorch.org/ and keep the remaining package versions unchanged.
