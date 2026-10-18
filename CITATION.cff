@@ -4,7 +4,7 @@ type: software
 abstract: "Code and configuration for histology-guided continuous spatial transcriptomics imputation with cross-modal aligned latent implicit neural representations."
 license: MIT
 repository-code: "https://github.com/keeping-up123/MorphoINR"
-date-released: 2026-09-27
+date-released: 2026-10-18
 authors:
   - family-names: "Wang"
     given-names: "Wen"
