@@ -11,11 +11,19 @@ def main(argv=None):
         required=True
     )
     parser.add_argument('--conf', type=str, required=True)
+    parser.add_argument(
+        '--case',
+        type=str,
+        default=None,
+        help='Optional case identifier overriding the value in the YAML config.',
+    )
     args = parser.parse_args(argv)
 
     from utils import pprint_config
 
     configs = OmegaConf.load(args.conf)
+    if args.case is not None:
+        configs.case = args.case
     print(args.conf)
     pprint_config(configs)
 

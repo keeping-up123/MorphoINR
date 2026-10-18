@@ -7,4 +7,4 @@ The executable model implementation is split into three layers:
 - `systems/`: Lightning training systems for the aligned AE and FiLM-SIREN stages.
 - `train.py`: command-line dispatcher for `embedder` and `inr_film` modes.
 
-From the project root, the equivalent convenience entry point is `python train.py`.
+From the project root, the equivalent convenience entry point is `python train.py`. The reproducible `Human_Brain_prefrontal_cortex_151507` commands and their fixed configuration paths are documented in the root README and `docs/reproducibility.md`.

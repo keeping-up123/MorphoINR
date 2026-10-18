@@ -31,7 +31,9 @@ class ST2D(Dataset):
         else: 
             self.embeddings = None
 
-        # Fixed train/val split from preprocessing
+        # Fixed 80/20 train/held-out-evaluation split from preprocessing.
+        # The internal ``val`` label is retained for compatibility with the
+        # released AnnData files and existing Lightning metric names.
         self.split = None
         if "split" in adata.obs:
             self.split = np.asarray(adata.obs["split"].astype(str))

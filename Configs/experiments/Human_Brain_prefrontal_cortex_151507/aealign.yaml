@@ -1,8 +1,8 @@
-case: data
+case: Human_Brain_prefrontal_cortex_151507
 
 dataset:
   type: ST2D
-  data_file: data/raw/${case}/${case}_with_phikon.h5ad
+  data_file: data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507_with_phikon.h5ad
   val_proportion: 0.2
   keep_ratio: True
   require_coordnorm: False
@@ -29,9 +29,10 @@ pipeline:
     epochs: 200
     lr: 1e-5
     val_freq: 50
-    logs: logs_final/random/${case}/aealign
+    logs: log/random/Human_Brain_prefrontal_cortex_151507/aealign
     batch_size: 512
+    num_workers: 0
 
   predict_mode: all
   embedded_data: embedded-all.h5ad
-  embedded_output: data_final/${case}/${case}_aealign_with_embeddings_phikon_zlocal.h5ad
+  embedded_output: data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507_aealign_with_embeddings_phikon_zlocal.h5ad

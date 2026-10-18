@@ -1,4 +1,4 @@
-"""Convenience entry point for the MorphoINR two-stage training pipeline."""
+"""Convenience entry point for the MorphoINR three-stage training pipeline."""
 
 import sys
 from pathlib import Path

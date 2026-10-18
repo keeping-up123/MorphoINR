@@ -6,8 +6,8 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 
 
 # ===================== 默认只改这里 =====================
-#DEFAULT_LOG_DIR = "logs_final/random/Human_Brain_prefrontal_cortex_151509/01_aeonly/lightning_logs/version_0"
-DEFAULT_LOG_DIR = "logs_final/random/Human_Brain_prefrontal_cortex_151509/02_aealign/lightning_logs/version_0"
+# Example default for the current compact release layout.
+DEFAULT_LOG_DIR = "log/random/Human_Brain_prefrontal_cortex_151507/aealign/lightning_logs/version_0"
 DEFAULT_MONITOR = "val/loss"
 # =======================================================
 
@@ -56,7 +56,7 @@ def main():
     parser.add_argument(
         "--log_dir",
         default=DEFAULT_LOG_DIR,
-        help="Lightning log directory, e.g. logs_final/random/<case>/02_aealign/lightning_logs/version_0",
+        help="Lightning log directory, e.g. log/random/Human_Brain_prefrontal_cortex_151507/aealign/lightning_logs/version_0",
     )
     parser.add_argument(
         "--monitor",

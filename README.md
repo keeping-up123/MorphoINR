@@ -2,109 +2,125 @@
 
 Histology-guided continuous spatial transcriptomics imputation via cross-modal aligned latent implicit neural representations.
 
-MorphoINR is the reproducibility package for the aligned autoencoder (AE) + FiLM-conditioned SIREN pipeline. The repository contains the model code, experiment configurations, analysis scripts, selected generated artifacts, checkpoints, paper figures, and reproducibility notes. Licensed raw datasets are downloaded separately from their official providers.
+MorphoINR is a three-stage pipeline instantiated for the `Human_Brain_prefrontal_cortex_151507` spatial-transcriptomics example:
 
-![MorphoINR framework](./Pic/framework.png)
+1. an autoencoder aligns a 64-dimensional gene-expression latent representation with 1,024-dimensional Phikon-v2 histology features;
+2. a FiLM-conditioned SIREN models the aligned latent representation continuously;
+3. the pretrained decoder is fine-tuned on raw expression and used to decode the continuous latent field.
 
-## Quick result validation
+![MorphoINR framework](Pic/Framework.png)
 
-The following command lists the available aligned experiments and project-local artifacts:
+The repository contains the implementation, the fixed human prefrontal cortex example inputs, experiment configurations, preprocessing helpers, and reproducibility instructions. Other datasets are not included.
 
-```bash
-find Configs/experiments -mindepth 2 -maxdepth 2 -name '*.yaml' | sort
-find logs_final/random -mindepth 1 -maxdepth 1 -type d | sort
-```
+## Reproduce the complete example
 
-The repository defines the generated-output locations under `data_final/` and `logs_final/`; large generated files are optional release artifacts and are not required to run the training code from raw data.
+Run all commands from the `MorphoINR/` root.
 
-## Environment setup
+### 1. Install the environment
 
 ```bash
 conda env create -f environment.yml
 conda activate morphoinr
 ```
 
-The Conda file installs the pinned Python packages automatically. If Conda is not available, create a Python 3.9 environment first and install the same pinned packages with `pip install -r requirements.txt`.
+The reference environment uses Python 3.9.25, PyTorch 2.8.0, Lightning 2.6.0, Scanpy 1.10.3, AnnData 0.10.9, and CUDA 12.x. See [environment.yml](environment.yml) and [requirements.txt](requirements.txt).
 
-The tested reference environment uses Python 3.9.25, PyTorch 2.8.0, Lightning 2.6.0, Scanpy 1.10.3, AnnData 0.10.9, and CUDA 12.x. GPU training requires a CUDA-compatible PyTorch installation; for another operating system or CUDA version, replace only the PyTorch wheel as described in `environment.yml`.
+### 2. Check the included example files
 
-Main packages include PyTorch, Lightning, Scanpy/AnnData, SciPy, NumPy, pandas, scikit-learn, OmegaConf, Transformers, TensorBoard, and Matplotlib. The complete unconstrained package list is in [requirements.txt](requirements.txt).
+The example files are already present at:
 
-## Data
+```text
+data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507.h5ad
+data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507_with_phikon.h5ad
+data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507_aealign_with_embeddings_phikon_zlocal.h5ad
+data/random/Human_Brain_prefrontal_cortex_151507/tissue_hires_image.png
+```
 
-Raw data are not committed to GitHub. Download the data from the official sources and read [data/README.md](data/README.md) before running an experiment.
+The base file contains 4,226 spots and 3,000 genes with `adata.obsm["spatial"]`, `adata.obsm["spatial_pixel"]`, and a fixed 80/20 train/held-out-evaluation split. The `_with_phikon.h5ad` file additionally contains `adata.obsm["phikon_cls"]`; the `_aealign_with_embeddings_phikon_zlocal.h5ad` file additionally contains `adata.obsm["embeddings"]` and `adata.obsm["z_local"]`. The implementation retains the internal `val` split label for compatibility with these released AnnData files.
 
-| Dataset group | Source |
-|---|---|
-| Human prefrontal cortex | [Globus file manager](https://app.globus.org/file-manager?origin_id=abdefb8c-731b-4907-a89d-9b5649d9967a&origin_path=%2F&two_pane=false) |
-| Human breast cancer | [Zenodo record 4739739](https://zenodo.org/records/4739739) |
+See [data/README.md](data/README.md) for provenance and the input contract. These prepared artifacts are included in this repository so that the example does not depend on another local project or directory.
 
-The training code expects AnnData `.h5ad` files with spatial coordinates in `adata.obsm["spatial"]`. Histology features are read from the configured image key, and the aligned stage-1 output contains `adata.obsm["embeddings"]` and `adata.obsm["z_local"]`.
+### 3. Run the three-stage experiment
 
-The links above document the currently confirmed Human prefrontal cortex and Human breast cancer sources. Add the official source and accession for every additional tissue included in a final release.
+```bash
+bash Scripts/train_aligned_film.sh
+```
 
-## Reproducing the aligned AE + FiLM-SIREN pipeline
+Because the Phikon-enriched input is already included, the script reuses it, trains the aligned AE, writes the stage-1 artifact, and then trains the FiLM-SIREN. The first run still requires the aligned-AE checkpoint to be trained because checkpoints are not included. Run the script from a machine with a CUDA-capable GPU for practical training time; CPU execution is supported but substantially slower.
 
-Run commands from the `MorphoINR/` root. Each dataset has a pair of YAML files under `Configs/experiments/<case>/`:
+If you remove the included Phikon-enriched file and want to regenerate it from the base H5AD, pass the image path as the second argument:
 
-1. Train the aligned AE and export the latent representation.
-2. Train the FiLM-conditioned SIREN using the aligned latent representation and the AE checkpoint.
-3. Evaluate the generated AnnData files with the analysis scripts.
+```bash
+bash Scripts/train_aligned_film.sh \
+  Human_Brain_prefrontal_cortex_151507 \
+  data/random/Human_Brain_prefrontal_cortex_151507/tissue_hires_image.png
+```
 
-Example for mouse breast cancer sample `1142243F`:
+Feature extraction downloads `owkin/phikon-v2` through Hugging Face on the first run and therefore requires network access. It is optional when the included `_with_phikon.h5ad` file is available.
+
+### 4. Run stages separately
+
+The fixed configurations are deliberately explicit. Run them in the order shown: the INR stage requires the aligned-AE checkpoint and stage-1 AnnData output produced by the first command.
 
 ```bash
 python Code/train.py \
   --mode embedder \
-  --conf Configs/experiments/1142243F/02_aealign.yaml
+  --conf Configs/experiments/Human_Brain_prefrontal_cortex_151507/aealign.yaml
 
 python Code/train.py \
   --mode inr_film \
-  --conf Configs/experiments/1142243F/08_inr_aealign_film_zlocal_siren.yaml
+  --conf Configs/experiments/Human_Brain_prefrontal_cortex_151507/inr_aealign_film_zlocal_siren.yaml
 ```
 
-For a single-case end-to-end run, use the path-resolving helper:
+The root-level `train.py` is a convenience wrapper around `Code/train.py`. All paths assume commands are launched from the project root.
 
-```bash
-bash Scripts/train_aligned_film.sh 1142243F
+## Data and generated files
+
+The three H5AD files and the matching histology image for this example are retained in the repository. Check the dataset provider's terms before redistributing the data or publishing a derived mirror. The source and input contract are documented in [data/README.md](data/README.md). Additional datasets are not redistributed.
+
+The pipeline writes:
+
+```text
+data/random/Human_Brain_prefrontal_cortex_151507/Human_Brain_prefrontal_cortex_151507_aealign_with_embeddings_phikon_zlocal.h5ad
+log/random/Human_Brain_prefrontal_cortex_151507/aealign/
+log/random/Human_Brain_prefrontal_cortex_151507/inr_aealign_film_zlocal_siren/
 ```
 
-For the other cases, use the corresponding `02_aealign.yaml` and `05_inr_aealign_film_zlocal_siren.yaml` files. The stage-1 configuration reads external data from `data/raw/`; the stage-2 configuration consumes the generated file under `data_final/` and writes to `logs_final/`.
-
-## Outputs
-
-- `data_final/`: generated aligned AE intermediate AnnData files (created during reproduction).
-- `logs_final/`: optional checkpoints, latent embeddings, reconstructed AnnData files, and training metadata.
-- `results/final_figures/` and `results/final_tables/`: selected publication outputs.
-
-The checkpoint and AnnData artifacts are large. Use Git LFS or a GitHub Release instead of ordinary Git blobs for files exceeding GitHub's regular file-size limit. See [checkpoints/README.md](checkpoints/README.md).
-
-## Applying MorphoINR to a custom dataset
-
-Prepare an AnnData object containing spatial coordinates and the configured histology feature matrix, then create a dataset-specific YAML by copying one of the files under `Configs/experiments/`. Set `dataset.data_file`, the feature key, the output directory, and the optimization parameters. Train the two stages in order with `Code/train.py` as shown above.
+Generated logs, checkpoints, decoder weights, and reconstructions are ignored by default. The three supplied H5AD inputs and image are explicitly retained as the reproducibility example.
 
 ## Repository layout
 
 ```text
 MorphoINR/
-├── train.py       # Root convenience entry point
-├── Code/          # Dataset loader, AE, SIREN, training systems
-├── Configs/       # Shared and per-dataset YAML configurations
-├── Scripts/       # Training helper, preprocessing, analysis, validation
-├── data/          # Official download links and data conventions
-├── data_final/    # Generated aligned intermediate data location
-├── logs_final/    # Curated checkpoints and generated outputs
-├── results/       # Figures, tables, and result notes
-├── docs/          # Paper and reproducibility checklist
-└── Pic/           # Method figure
+├── README.md
+├── LICENSE
+├── CITATION.cff
+├── requirements.txt
+├── environment.yml
+├── train.py
+├── Code/
+│   ├── datasets.py
+│   ├── networks/                    # AE, histology projector, SIREN
+│   └── systems/                     # aligned AE and FiLM-SIREN systems
+├── Configs/experiments/Human_Brain_prefrontal_cortex_151507/
+│   ├── aealign.yaml
+│   └── inr_aealign_film_zlocal_siren.yaml
+├── Scripts/
+│   ├── train_aligned_film.sh
+│   ├── preprocess/                  # Phikon extraction and AnnData merging
+│   └── diagnostics/
+├── data/
+│   ├── README.md
+│   └── random/Human_Brain_prefrontal_cortex_151507/
+├── log/                             # ignored training outputs
+├── docs/reproducibility.md
+└── Pic/Framework.png
 ```
 
-## Citation and license
+## Citation and acknowledgment
 
-Please cite the MorphoINR paper and the original dataset publications. Dataset terms are defined by their providers and are not replaced by this repository's license. Complete author metadata in [CITATION.cff](CITATION.cff) before the public release.
-
-## Acknowledgment
-
-This project is based on and extends the SUICA framework for continuous spatial transcriptomics modeling. In particular, the present repository organizes the aligned autoencoder and histology-conditioned FiLM-SIREN implementation used for the MorphoINR experiments. Please also cite the original SUICA paper:
+If you use this repository, cite the SUICA paper on which the implementation is based and extended, together with the original dataset publication:
 
 > Qingtian Zhu, Yumin Zheng, Yuling Sang, Yifan Zhan, Ziyan Zhu, Jun Ding, and Yinqiang Zheng. “SUICA: Learning Super-high Dimensional Sparse Implicit Neural Representations for Spatial Transcriptomics.” *Proceedings of the 42nd International Conference on Machine Learning*, PMLR 267, 2025. arXiv:2412.01124.
+
+When the MorphoINR manuscript has its final bibliographic record, add that citation here. Dataset terms are defined by their providers and are not replaced by this repository's MIT license.

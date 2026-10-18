@@ -1,4 +1,4 @@
-import scanpy as sc
+import anndata as ad
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, root_mean_squared_error
 from scipy.stats import spearmanr, pearsonr
@@ -65,10 +65,14 @@ def _plot_volume(coordinates, representatons=None, spot_size=2, cmap="viridis", 
 
 
 def read_anndata(h5ad_file):
-    return sc.read_h5ad(h5ad_file)
+    # The training path only needs AnnData I/O. Keep Scanpy out of the module
+    # import path because some installations fail during numba cache setup.
+    return ad.read_h5ad(h5ad_file)
 
 
 def read_preprocess_anndata(h5ad_file, min_genes=200, min_cells=3):
+    import scanpy as sc
+
     adata = sc.read_h5ad(h5ad_file)
     raw_size = adata.X.shape
     sc.pp.filter_cells(adata, min_counts=min_genes) # filter cells containing less than #min_genes genes

@@ -76,7 +76,7 @@ class EmbedderFittingSystem(L.LightningModule):
                     hidden_dim=align_configs.get("hidden_dim", 512),
                 )
 
-                self.align_alpha = align_configs.get("alpha", 0.05)
+                self.align_alpha = align_configs.get("alpha", 0.001)
                 self.temperature = align_configs.get("temperature", 0.1)
                 self.detach_gene_for_align = align_configs.get(
                     "detach_gene_for_align", False
@@ -354,14 +354,14 @@ def train_embedder(configs):
         if "split" in adata.obs:
             train_idx = np.where(adata.obs["split"] == "train")[0].tolist()
             val_idx = np.where(adata.obs["split"] == "val")[0].tolist()
-            print("[green]GAE using fixed train/val split from adata.obs['split'][/green]")
+            print("[green]GAE using fixed train/held-out evaluation split from adata.obs['split'][/green]")
         else:
             train_idx, val_idx = train_test_split(
                 list(range(len(adata))), 
                 test_size=dataset_configs.val_proportion, 
                 random_state=pipeline_configs.optimization.seed
             )
-            print("[yellow]GAE using random train_test_split (Warning: No fixed split found)[/yellow]")
+            print("[yellow]GAE using a deterministic random 80/20 split (no fixed split found)[/yellow]")
         adata_train = adata[train_idx]
         adata_val = adata[val_idx]
         print(len(adata_train),len(adata_val))
@@ -393,11 +393,12 @@ def train_embedder(configs):
 
         print("Fitting embedder ...")
 
-        # Use fixed train/val split from adata.obs["split"] if available.
+        # Use the fixed train/held-out-evaluation split from adata.obs["split"]
+        # when available. The internal ``val`` label is retained for compatibility.
         # This is required to avoid data leakage.
         if hasattr(dataset, "has_split") and dataset.has_split():
             train_idx, val_idx = dataset.get_train_val_indices()
-            print("[green]Using fixed train/val split from adata.obs['split'][/green]")
+            print("[green]Using fixed train/held-out evaluation split from adata.obs['split'][/green]")
         else:
             train_idx, val_idx = train_test_split(
                 list(range(len(dataset))),
@@ -405,7 +406,7 @@ def train_embedder(configs):
                 random_state=pipeline_configs.optimization.seed,
                 shuffle=True,
             )
-            print("[yellow]No fixed split found. Falling back to random train_test_split.[/yellow]")
+            print("[yellow]No fixed split found. Falling back to a deterministic random 80/20 split.[/yellow]")
 
         print(len(train_idx), len(val_idx))
         print(f"{val_idx[:10]=}")
@@ -414,8 +415,9 @@ def train_embedder(configs):
         
 
         batch_size = pipeline_configs.optimization.batch_size
-        train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=8, drop_last=False)
-        val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        num_workers = int(pipeline_configs.optimization.get("num_workers", 0))
+        train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=num_workers, drop_last=False)
+        val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         extra_callback = ExtraVariableCallback(extra_variable=None)
     # pipeline configuration
     fitting_system = EmbedderFittingSystem(pipeline_configs, val_pca=dataset.raw_pca)
@@ -478,15 +480,15 @@ def train_embedder(configs):
         del val_dataset
         del val_dataloader
         gc.collect()
-        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=1, drop_last=False)
+        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, dataloaders=test_dataloader)
     elif pipeline_configs.predict_mode=="val":
-        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, dataloaders=test_dataloader)
     elif pipeline_configs.predict_mode=="resample":
-        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, dataloaders=test_dataloader)
-        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, dataloaders=test_dataloader)
     
 

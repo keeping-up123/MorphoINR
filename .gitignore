@@ -20,17 +20,22 @@ data/**/*.bam
 data/**/*.bai
 data/**/*.mtx
 data/**/*.gz
-checkpoints/*
-!checkpoints/README.md
 logs/
 logs_*/
-logs_final/*
-!logs_final/README.md
-data_final/*
-!data_final/README.md
-!data_final/.gitkeep
+log/*
+!log/README.md
+!log/.gitkeep
+data/*
+data/**/*.h5ad
+data/**/*.h5
+data/**/*.png
+!data/README.md
+!data/.gitkeep
+!data/random/
+!data/random/Human_Brain_prefrontal_cortex_151507/
+!data/random/Human_Brain_prefrontal_cortex_151507/*.h5ad
+!data/random/Human_Brain_prefrontal_cortex_151507/tissue_hires_image.png
 tensorboard/
-results/generated/
 
 # IDE / OS
 .idea/

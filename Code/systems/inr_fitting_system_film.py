@@ -494,11 +494,12 @@ def train_inr(configs):
 
     print(f"Fitting ST [italic red]{pipeline_configs.target}[/italic red] with INR ...")
 
-    # Use fixed split from adata.obs["split"] if available.
+    # Use the fixed train/held-out-evaluation split from adata.obs["split"]
+    # when available. The internal ``val`` label is retained for compatibility.
     # This avoids data leakage and keeps all experiments comparable.
     if hasattr(dataset, "has_split") and dataset.has_split():
         train_idx, val_idx = dataset.get_train_val_indices()
-        print("[green]Using fixed train/val split from adata.obs['split'][/green]")
+        print("[green]Using fixed train/held-out evaluation split from adata.obs['split'][/green]")
     else:
         train_idx, val_idx = train_test_split(
             list(range(len(dataset))),
@@ -506,7 +507,7 @@ def train_inr(configs):
             random_state=pipeline_configs.optimization.seed,
             shuffle=True,
         )
-        print("[yellow]No fixed split found. Falling back to random train_test_split.[/yellow]")
+        print("[yellow]No fixed split found. Falling back to a deterministic random 80/20 split.[/yellow]")
 
     print(len(train_idx), len(val_idx))
     print(f"{val_idx[:10]=}")
@@ -514,8 +515,9 @@ def train_inr(configs):
     train_dataset, val_dataset = Subset(dataset, train_idx), Subset(dataset, val_idx)
 
     batch_size = pipeline_configs.optimization.batch_size
-    train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=8, drop_last=False)
-    val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+    num_workers = int(pipeline_configs.optimization.get("num_workers", 0))
+    train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=batch_size, num_workers=num_workers, drop_last=False)
+    val_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
     num_batches_in_epoch = len(train_dataloader)
 
     # pipeline configuration
@@ -615,12 +617,12 @@ def train_inr(configs):
         del val_dataset
         del val_dataloader
         gc.collect()
-        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        test_dataloader = DataLoader(dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, test_dataloader)        
     elif pipeline_configs.predict_mode=="val":
         del dataset
         gc.collect()
-        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=8, drop_last=False)
+        test_dataloader = DataLoader(val_dataset, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=False)
         trainer.predict(fitting_system, test_dataloader) 
     else:
         print("End without writing predictions.")
