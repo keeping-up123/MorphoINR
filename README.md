@@ -117,10 +117,18 @@ MorphoINR/
 └── Pic/Framework.png
 ```
 
-## Citation and acknowledgment
+## Citation and Acknowledgment
 
-If you use this repository, cite the SUICA paper on which the implementation is based and extended, together with the original dataset publication:
+If you use this repository, please cite our manuscript first, along with the SUICA paper on which this implementation is based and extended, and the original dataset publication.
 
-> Qingtian Zhu, Yumin Zheng, Yuling Sang, Yifan Zhan, Ziyan Zhu, Jun Ding, and Yinqiang Zheng. “SUICA: Learning Super-high Dimensional Sparse Implicit Neural Representations for Spatial Transcriptomics.” *Proceedings of the 42nd International Conference on Machine Learning*, PMLR 267, 2025. arXiv:2412.01124.
+**Our manuscript (submitted to BIBM 2026):**
 
-When the MorphoINR manuscript has its final bibliographic record, add that citation here. Dataset terms are defined by their providers and are not replaced by this repository's MIT license.
+> Wen Wang, Xiaobo Liao, Jinyu Liu, Yu Hu, Guan Huang, Mai Chen, Langsheng Lei, and Xiaoping Li. "Histology-Guided Continuous Spatial Transcriptomics Imputation via Cross-Modal Aligned Latent Implicit Neural Representations." Submitted to the *IEEE International Conference on Bioinformatics and Biomedicine (BIBM 2026)*, 2026.
+
+**Based on and extended from SUICA:**
+
+> Qingtian Zhu, Yumin Zheng, Yuling Sang, Yifan Zhan, Ziyan Zhu, Jun Ding, and Yinqiang Zheng. "SUICA: Learning Super-high Dimensional Sparse Implicit Neural Representations for Spatial Transcriptomics." *Proceedings of the 42nd International Conference on Machine Learning*, PMLR 267, 2025. arXiv:2412.01124.
+
+Please also acknowledge the original dataset publication and follow the dataset providers' citation and usage requirements. Dataset terms are defined by their providers and are not replaced by this repository's MIT license.
+
+The bibliographic information for our manuscript will be updated once the paper has its final publication record.
